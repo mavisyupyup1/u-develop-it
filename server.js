@@ -6,9 +6,11 @@ const PORT = process.env.PORT || 3001;
 const app = express();
 //requiring the new connection.js db module export by declaring new const
 const db = require('./db/connection')
+const apiRoutes = require('./routes/apiRoutes')
 //express middleware
 app.use(express.urlencoded({extended:false}))
 app.use(express.json())
+app.use('./api',apiRoutes)
 
 //querying database to test the connection
 app.get('/api/candidates',(req,res)=>{
