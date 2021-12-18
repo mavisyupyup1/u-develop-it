@@ -1,7 +1,6 @@
-const express = require('express')
+const express = require('express');
 const router = express.Router();
-const db=require('../../db/connection')
-
+const db=require('../../db/connection');
 
 //create routes to display all parties 
 router.get('/parties',(req,res)=>{
@@ -14,11 +13,11 @@ router.get('/parties',(req,res)=>{
         res.json({
             message:'success',
             data:rows
-        })
-    })
-})
+        });
+    });
+});
 // create routes that includes id parameter for a single party
-app.get('/party/:id',(req,res)=>{
+router.get('/party/:id',(req,res)=>{
     const sql = `SELECT * FROM parties WHERE id = ?`;
     const params =[req.params.id];
     db.query(sql,params,(err,row)=>{
@@ -29,9 +28,9 @@ app.get('/party/:id',(req,res)=>{
         res.json({
             message:'success',
             data:row
-        })
-    })
-})
+        });
+    });
+});
 
 //build a delete route
 router.delete('/party/:id',(req,res)=>{
@@ -50,7 +49,9 @@ router.delete('/party/:id',(req,res)=>{
                 message:'delete',
                 changes:result.affectedRows,
                 id:req.params.id
-            })
+            });
         }
     })
-})
+});
+
+module.exports = router;

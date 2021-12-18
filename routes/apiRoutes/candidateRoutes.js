@@ -76,7 +76,6 @@ router.post('/candidate',({body},res)=>{
     })
 })
 
-
 // create route to handle updates
 router.put('/candidate/:id',(req,res)=>{
     const errors = inputCheck(req.body,'party_id')
@@ -103,6 +102,5 @@ router.put('/candidate/:id',(req,res)=>{
         }
     })
 })
-
 
 module.exports=router;
