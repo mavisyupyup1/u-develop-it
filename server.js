@@ -1,29 +1,18 @@
 //import express
 const express = require ('express');
 const inputCheck= require('./utils/inputCheck')
-require('dotenv').config()
-console.log(process.env)
-//import mysql2 package
-const mysql=require('mysql2')
 // add port designation and app expression
 const PORT = process.env.PORT || 3001;
 const app = express();
+//requiring the new connection.js db module export by declaring new const
+const db = require('./db/connection')
 //express middleware
 app.use(express.urlencoded({extended:false}))
 app.use(express.json())
-//connect to database
-const db =mysql.createConnection(
-    {
-        host:'localhost',
-        user:process.env.DB_USER,
-        password:process.env.DB_PASS,
-        database: process.env.DB_NAME
-    },
-    console.log('Connected to the election database')
-)
+
 //querying database to test the connection
 app.get('/api/candidates',(req,res)=>{
-    const sql=`SELECT * FROM candidates`;
+    const sql=`SELECT candidates.*, parties.name AS party_name FROM candidates LEFT JOIN parties ON candidates.party_id = parties.id`;
     db.query(sql, (err,rows)=>{
         if(err){
             res.status(500).json({error:err.message});
@@ -37,7 +26,7 @@ app.get('/api/candidates',(req,res)=>{
 });
 //get a single candidate
 app.get('/api/candidate/:id',(req,res)=>{
-    const sql = `SELECT * FROM candidates WHERE id =?`;
+    const sql = `SELECT candidates.*, parties.name AS party_name FROM candidates LEFT JOIN parties ON candidates.party_id = parties.id WHERE candidates.id =?`;
     const params = [req.params.id];
     db.query(sql,params,(err,row)=>{
         if(err){
@@ -95,6 +84,85 @@ app.post('/api/candidate',({body},res)=>{
             message:'success',
             data:body
         })
+    })
+})
+
+//create routes to display all parties 
+app.get('/api/parties',(req,res)=>{
+    const sql = `SELECT * FROM parties`;
+    db.query(sql,(err,rows)=>{
+        if(err){
+            res.status(500).json({error:err.message});
+            return;
+        }
+        res.json({
+            message:'success',
+            data:rows
+        })
+    })
+})
+// create routes that includes id parameter for a single party
+app.get('/api/party/:id',(req,res)=>{
+    const sql = `SELECT * FROM parties WHERE id = ?`;
+    const params =[req.params.id];
+    db.query(sql,params,(err,row)=>{
+        if(err){
+            res.status(400).json({error:err.message});
+            return;
+        }
+        res.json({
+            message:'success',
+            data:row
+        })
+    })
+})
+
+//build a delete route
+app.delete('/api/party/:id',(req,res)=>{
+    const sql =`DELETE FROM parties WHERE id = ?`;
+    const params = [req.params.id];
+    db.query(sql,params,(err,result)=>{
+        if(err){
+            res.status(400).json({error:res.message});
+            //check if anything was deleted
+        } else if(!result.affectedRows){
+            res.json({
+                message:'Party not found'
+            })
+        } else {
+            res.json({
+                message:'delete',
+                changes:result.affectedRows,
+                id:req.params.id
+            })
+        }
+    })
+})
+
+// create route to handle updates
+app.put('/api/candidate/:id',(req,res)=>{
+    const errors = inputCheck(req.body,'party_id')
+    if(errors){
+        res.status(400).json({error:errors});
+        return;
+    }
+    const sql = `UPDATE candidates SET party_id =? WHERE id=?`;
+    const params =[req.params.party_id, req.params.id];
+    db.query(sql,params,(err,result)=>{
+        if(err){
+            res.status(400).json({error: err.message})
+            //check if a record was found.
+        } else if (!result.affectedRows) {
+            res.json({
+                message:'Candidate not found'
+            })       
+        } else {
+            res.json({
+                message:'success',
+                data:req.body,
+                changes: result.affectedRows
+            });
+        }
     })
 })
 
